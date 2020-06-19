@@ -4,7 +4,7 @@ from pyspark.sql.functions import udf, col, input_file_name
 
 from pyspark.sql.types import *
 
-def get_load_data(filepath):
+def get_load_date(filepath):
   # This file path name will split on "/" and last part having file name will be splitted again on underscore "_"
   loaddate = filepath.split('/')[-1].split('_')
   return loaddate[1]+'/'+loaddate[2]+'/'+loaddate[3]
@@ -15,7 +15,7 @@ load_date_udf =  udf ( get_load_date, StringType() )
 sc = SparkContext(appName="CSV_Hive_Partition")
 sqlContext = SQLContext(sc)
 
-def load_date( filename ):
+def load_data( filename ):
   df = sqlContext.read.format("com.databricks.spark.csv")\
   .option("delimiter","|")\
   .option("header", "false")\
@@ -23,7 +23,8 @@ def load_date( filename ):
   .schema(schema)\
   .load(filename)
   
-  #Add the load_date from filename for hive partition
+  #Add extra column 'load_date' which will have date from filename for hive partition. 
+  #Input_file_name() will pass every files passed as the * in load_date
   df = df.withColumn('load_date', load_date_udf(input_file_name()))
   return df
 
